@@ -1,0 +1,3 @@
+pyinstaller
+pikepdf
+pywin32

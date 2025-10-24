@@ -1,0 +1,18 @@
+# Python / venv
+.venv/
+__pycache__/
+*.pyc
+
+# PyInstaller build artifacts
+build/
+dist/
+*.spec
+
+# Logs and temp
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
