@@ -1,5 +1,9 @@
 name: Release Windows EXE
 
+# Ensure the workflow token can create releases
+permissions:
+  contents: write
+
 on:
   push:
     tags:
@@ -48,4 +52,5 @@ jobs:
         with:
           files: |
             dist/MetaCLeaner_Portable.exe
-
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
