@@ -89,3 +89,59 @@ jobs:
             dist/MetaCLeaner_Portable.exe
         env:
           GITHUB_TOKEN: ${{ secrets.TARGET_REPO_TOKEN }}
+name: Build portable EXE
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'downloads/**'
+  workflow_dispatch: {}
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install build deps
+        run: |
+          python -m pip install -U pip
+          pip install -r requirements.txt
+
+      - name: Fetch ExifTool
+        shell: pwsh
+        run: |
+          choco install exiftool -y
+          $exe = Get-ChildItem 'C:\\ProgramData\\chocolatey' -Recurse -Filter exiftool*.exe | Select-Object -First 1 -Expand FullName
+          if (-not $exe) { throw "ExifTool not found" }
+          New-Item -ItemType Directory -Force -Path vendor\exiftool | Out-Null
+          Copy-Item $exe vendor\exiftool\ExifTool.exe
+
+      - name: Build EXE
+        run: |
+          pyinstaller --noconsole --onefile --name MetaCLeaner_Portable --add-binary "vendor\exiftool\ExifTool.exe;exiftool" meta_cleaner.pyw
+
+      - name: Copy EXE into repo downloads folder
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path downloads | Out-Null
+          Copy-Item -Force dist\MetaCLeaner_Portable.exe downloads\MetaCLeaner_Portable.exe
+
+      - name: Commit EXE to repo (make it visible in Code tab)
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: downloads/MetaCLeaner_Portable.exe
+          message: "CI: update portable EXE"
+          default_author: github_actions
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
